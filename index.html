@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secretary Club Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for clean tables */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div
+                    class="bg-brand-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-clipboard-check text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Secretary Club Tracker</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Secretary Management Portal</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div id="syncStatus"
+                    class="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-100 px-2.5 py-1.5 rounded-lg"
+                    title="Local Browser Storage">
+                    <span id="syncDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <span id="syncText">Local Storage</span>
+                </div>
+                <button onclick="openGuideModal()"
+                    class="text-slate-600 hover:text-brand-600 hover:bg-brand-50 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span class="hidden md:inline">Rules & Tiers</span>
+                </button>
+
+                <!-- Backup/Export Dropdown -->
+                <div class="relative">
+                    <button onclick="toggleExportMenu()" id="exportMenuBtn"
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden sm:inline">Backup/Export</span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="exportMenu"
+                        class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                        <button onclick="exportBackup(); toggleExportMenu();"
+                            class="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition flex items-center gap-3 text-sm">
+                            <i class="fa-solid fa-file-arrow-down text-brand-600 w-4"></i>
+                            <div>
+                                <div class="font-semibold text-slate-900">Export Backup</div>
+                                <div class="text-xs text-slate-500">Full data (.json)</div>
+                            </div>
+                        </button>
+                        <button onclick="document.getElementById('importBackupInput').click(); toggleExportMenu();"
+                            class="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition flex items-center gap-3 text-sm">
+                            <i class="fa-solid fa-file-arrow-up text-emerald-600 w-4"></i>
+                            <div>
+                                <div class="font-semibold text-slate-900">Import Backup</div>
+                                <div class="text-xs text-slate-500">Restore from .json</div>
+                            </div>
+                        </button>
+                        <hr class="my-2 border-slate-100">
+                        <button onclick="exportCSV(); toggleExportMenu();"
+                            class="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition flex items-center gap-3 text-sm">
+                            <i class="fa-solid fa-table text-purple-600 w-4"></i>
+                            <div>
+                                <div class="font-semibold text-slate-900">Export CSV Report</div>
+                                <div class="text-xs text-slate-500">For Excel/Sheets</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden file input for import -->
+                <input type="file" id="importBackupInput" accept=".json" onchange="importBackup(event)" class="hidden">
+
+                <button onclick="openQuickLogModal()"
+                    class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm shadow-brand-600/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Quick Log</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+        <!-- KPI Dashboard Cards -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Members</p>
+                    <p id="statTotalMembers" class="text-2xl font-bold text-slate-900 mt-0.5">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-hand-holding-heart"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Service Hours</p>
+                    <p id="statServiceHours" class="text-2xl font-bold text-slate-900 mt-0.5">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Club Points</p>
+                    <p id="statTotalPoints" class="text-2xl font-bold text-slate-900 mt-0.5">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tier Achievers</p>
+                    <p id="statTierAchievers" class="text-2xl font-bold text-slate-900 mt-0.5">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls & Filters Bar -->
+        <section
+            class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
+            <!-- Search & Grade Filter -->
+            <div class="flex flex-col sm:flex-row gap-3 flex-1">
+                <div class="relative flex-1 max-w-md">
+                    <i
+                        class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="renderRoster()"
+                        placeholder="Search member by name or ID..."
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                </div>
+
+                <select id="gradeFilter" onchange="renderRoster()"
+                    class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <option value="ALL">All Grades</option>
+                    <option value="Senior">Seniors (12th)</option>
+                    <option value="Junior">Juniors (11th)</option>
+                    <option value="Sophomore">Sophomores (10th)</option>
+                    <option value="Freshman">Freshmen (9th)</option>
+                </select>
+
+                <select id="tierFilter" onchange="renderRoster()"
+                    class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <option value="ALL">All Achievement Tiers</option>
+                    <option value="PIN">Recognition Pin (30+ hrs)</option>
+                    <option value="CORD">Senior Graduation Cord (25+ hrs)</option>
+                    <option value="CERT">Active Membership Cert (20+ hrs)</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                </select>
+            </div>
+
+            <!-- Add Member Button -->
+            <button onclick="openAddMemberModal()"
+                class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shrink-0">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Add Member</span>
+            </button>
+        </section>
+
+        <!-- Roster Table / Cards Container -->
+        <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            <th class="py-4 px-5">Member</th>
+                            <th class="py-4 px-4">Service Hrs</th>
+                            <th class="py-4 px-4">
+                                <div class="flex items-center gap-1">
+                                    <span>Points</span>
+                                    <span
+                                        class="text-[10px] font-normal normal-case bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-md"
+                                        title="Max 20 pts convert to 5 club hrs">4 pts = 1 hr</span>
+                                </div>
+                            </th>
+                            <th class="py-4 px-4">Total Club Hrs</th>
+                            <th class="py-4 px-4">Achievement Tier</th>
+                            <th class="py-4 px-5 text-right">Quick Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rosterTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Dynamic Rows Injected Here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden py-12 px-4 text-center">
+                <div
+                    class="w-16 h-16 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-users-slash"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-900">No members found</h3>
+                <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Try adjusting your search filters or add a new
+                    club member to start tracking hours and points.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- 1. Quick Log Activity Modal (Supports Individual or Bulk Logging!) -->
+    <div id="quickLogModal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-lg w-full shadow-xl border border-slate-200 overflow-hidden fade-in flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">Quick Log Hours & Points</h2>
+                </div>
+                <button onclick="closeModal('quickLogModal')"
+                    class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="quickLogForm" onsubmit="handleQuickLog(event)" class="p-6 space-y-4 overflow-y-auto">
+                <!-- Activity Type Selector -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">1. Select
+                        Activity Type</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="activityType" value="volunteering" class="peer sr-only" checked
+                                onchange="updateLogFormUI()">
+                            <div
+                                class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 transition text-center">
+                                <i class="fa-solid fa-hand-holding-heart text-emerald-600 text-lg mb-1"></i>
+                                <p class="text-xs font-bold text-slate-800">Volunteering</p>
+                                <p class="text-[11px] text-slate-500">1 hr = 1 Service Hr</p>
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="activityType" value="workshop" class="peer sr-only"
+                                onchange="updateLogFormUI()">
+                            <div
+                                class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-purple-500 peer-checked:bg-purple-50/50 transition text-center">
+                                <i class="fa-solid fa-chalkboard-user text-purple-600 text-lg mb-1"></i>
+                                <p class="text-xs font-bold text-slate-800">Workshop / Event</p>
+                                <p class="text-[11px] text-slate-500">+2 Points Each</p>
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="activityType" value="social" class="peer sr-only"
+                                onchange="updateLogFormUI()">
+                            <div
+                                class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50/50 transition text-center">
+                                <i class="fa-solid fa-users text-blue-600 text-lg mb-1"></i>
+                                <p class="text-xs font-bold text-slate-800">Social / Meeting</p>
+                                <p class="text-[11px] text-slate-500">+1 Point Each</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Event Name & Amount -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Event / Description</label>
+                        <input type="text" id="logTitle" required placeholder="e.g., Beach Cleanup or Oct Meeting"
+                            class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                    </div>
+                    <div id="hoursInputWrapper">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Service Hours</label>
+                        <input type="number" id="logAmount" step="0.5" min="0.5" max="50" value="1" required
+                            class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                    </div>
+                </div>
+
+                <!-- Member Multi-Select Checklist (Great for Meeting Attendance!) -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">2. Select
+                            Attending Members</label>
+                        <div class="flex gap-2 text-xs">
+                            <button type="button" onclick="toggleAllLogMembers(true)"
+                                class="text-brand-600 hover:underline font-medium">Select All</button>
+                            <span class="text-slate-300">|</span>
+                            <button type="button" onclick="toggleAllLogMembers(false)"
+                                class="text-slate-500 hover:underline">Clear</button>
+                        </div>
+                    </div>
+                    <div id="logMemberChecklist"
+                        class="border border-slate-200 rounded-xl max-h-48 overflow-y-auto divide-y divide-slate-100 bg-slate-50/50 p-1">
+                        <!-- Checkboxes populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('quickLogModal')"
+                        class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+                    <button type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-sm transition">
+                        Save Log Entry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Member Details & History Modal -->
+    <div id="memberDetailModal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-2xl w-full shadow-xl border border-slate-200 overflow-hidden fade-in flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div>
+                    <h2 id="detailName" class="text-lg font-bold text-slate-900">Member Name</h2>
+                    <p id="detailMeta" class="text-xs text-slate-500">Grade • Student ID</p>
+                </div>
+                <button onclick="closeModal('memberDetailModal')"
+                    class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Breakdown Summary Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-emerald-50/70 border border-emerald-100 p-3 rounded-xl">
+                        <p class="text-[11px] font-semibold uppercase text-emerald-700">Service Hours</p>
+                        <p id="detailServiceHrs" class="text-xl font-bold text-emerald-900 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-purple-50/70 border border-purple-100 p-3 rounded-xl">
+                        <p class="text-[11px] font-semibold uppercase text-purple-700">Raw Points</p>
+                        <p id="detailRawPoints" class="text-xl font-bold text-purple-900 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-blue-50/70 border border-blue-100 p-3 rounded-xl">
+                        <p class="text-[11px] font-semibold uppercase text-blue-700">Converted Hrs</p>
+                        <p id="detailConvertedHrs" class="text-xl font-bold text-blue-900 mt-0.5">0 <span
+                                class="text-xs font-normal text-blue-600">/ 5 max</span></p>
+                    </div>
+                    <div class="bg-slate-900 text-white p-3 rounded-xl">
+                        <p class="text-[11px] font-semibold uppercase text-slate-300">Total Club Hrs</p>
+                        <p id="detailTotalHrs" class="text-xl font-bold mt-0.5">0</p>
+                    </div>
+                </div>
+
+                <!-- Tier Status Box -->
+                <div id="detailTierBox" class="p-4 rounded-xl border">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Activity History Log -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Activity Log History</h3>
+                    <div id="detailHistoryList" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <button id="deleteMemberBtn"
+                    class="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash"></i> Remove Member
+                </button>
+                <button onclick="closeModal('memberDetailModal')"
+                    class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-1.5 rounded-xl text-sm font-medium transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Add New Member Modal -->
+    <div id="addMemberModal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-200 overflow-hidden fade-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h2 class="text-lg font-bold text-slate-900">Add Club Member</h2>
+                <button onclick="closeModal('addMemberModal')"
+                    class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleAddMember(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                    <input type="text" id="newMemberName" required placeholder="e.g., Jordan Lee"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Student ID</label>
+                        <input type="text" id="newMemberId" required placeholder="e.g., 104829"
+                            class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Grade Level</label>
+                        <select id="newMemberGrade"
+                            class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                            <option value="Senior">Senior (12th)</option>
+                            <option value="Junior">Junior (11th)</option>
+                            <option value="Sophomore">Sophomore (10th)</option>
+                            <option value="Freshman">Freshman (9th)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('addMemberModal')"
+                        class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+                    <button type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-sm">Add
+                        Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Club Rules & Guide Modal -->
+    <div id="guideModal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-xl w-full shadow-xl border border-slate-200 overflow-hidden fade-in flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-brand-600 text-white">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <h2 class="text-lg font-bold">Club Hours & Points Guide</h2>
+                </div>
+                <button onclick="closeModal('guideModal')" class="text-white/80 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-5 text-sm text-slate-700">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base mb-2">📌 Earning Hours & Points</h3>
+                    <ul class="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+                        <li class="flex justify-between"><span>• Volunteering</span> <span
+                                class="font-semibold text-emerald-600">1 hr = 1 service hour</span></li>
+                        <li class="flex justify-between"><span>• Workshops / Events</span> <span
+                                class="font-semibold text-purple-600">2 points each</span></li>
+                        <li class="flex justify-between"><span>• Socials / Meetings</span> <span
+                                class="font-semibold text-blue-600">1 point each</span></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base mb-1">🔄 Point Conversion Rule</h3>
+                    <p class="text-slate-600 bg-blue-50/60 border border-blue-100 p-3.5 rounded-xl">
+                        Every <strong>4 points = 1 club hour</strong>. Members can convert up to <strong>20 points per
+                            semester</strong>, adding up to <strong>5 club hours</strong> to their service hours.
+                        <em>(This tracker calculates this automatically!)</em>
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base mb-2">🏆 Club Achievement Tiers</h3>
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-900">Active Membership Certificate</p>
+                                <p class="text-xs text-slate-500">At least 15 service hours required</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-lg text-xs">20 Total
+                                Hrs</span>
+                        </div>
+                        <div
+                            class="p-3 rounded-xl border border-amber-200 bg-amber-50/30 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-amber-900">Senior Graduation Cord</p>
+                                <p class="text-xs text-amber-700">Seniors only • At least 20 service hours</p>
+                            </div>
+                            <span class="bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-lg text-xs">25 Total
+                                Hrs</span>
+                        </div>
+                        <div
+                            class="p-3 rounded-xl border border-purple-200 bg-purple-50/30 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-purple-900">Recognition Pin</p>
+                                <p class="text-xs text-purple-700">At least 25 service hours required</p>
+                            </div>
+                            <span class="bg-purple-100 text-purple-800 font-bold px-3 py-1 rounded-lg text-xs">30+ Total
+                                Hrs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('guideModal')"
+                    class="bg-brand-600 text-white px-5 py-2 rounded-xl text-sm font-semibold">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notification (Replaces alert()) -->
+    <div id="toast"
+        class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2.5 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMsg">Action completed</span>
+    </div>
+
+    <script>
+        // ==========================================
+        // LOCAL STORAGE SETUP
+        // ==========================================
+        const STORAGE_KEY = 'club_members_data';
+
+        // Default starter members seeded only if the cloud roster is completely empty on first load
+        const defaultStarterMembers = [
+            {
+                id: "102934",
+                name: "Maya Lin",
+                grade: "Senior",
+                logs: [
+                    { id: 1, type: "volunteering", title: "Community Food Bank", serviceHrs: 12, points: 0, date: "2026-09-14" },
+                    { id: 2, type: "volunteering", title: "Park Trail Restoration", serviceHrs: 8, points: 0, date: "2026-10-05" },
+                    { id: 3, type: "workshop", title: "Leadership & Resume Workshop", serviceHrs: 0, points: 2, date: "2026-10-12" },
+                    { id: 4, type: "workshop", title: "College App Night", serviceHrs: 0, points: 2, date: "2026-10-20" },
+                    { id: 5, type: "social", title: "Sept, Oct, Nov General Meetings (x16 pts)", serviceHrs: 0, points: 16, date: "2026-11-02" }
+                ]
+            },
+            {
+                id: "104821",
+                name: "Carlos Rivera",
+                grade: "Junior",
+                logs: [
+                    { id: 101, type: "volunteering", title: "Library Book Drive", serviceHrs: 26, points: 0, date: "2026-09-22" },
+                    { id: 102, type: "workshop", title: "STEM Outreach Event", serviceHrs: 0, points: 2, date: "2026-10-15" },
+                    { id: 103, type: "workshop", title: "Public Speaking Clinic", serviceHrs: 0, points: 2, date: "2026-11-01" },
+                    { id: 104, type: "social", title: "Fall Bonfire Social", serviceHrs: 0, points: 1, date: "2026-11-10" },
+                    { id: 105, type: "workshop", title: "Fundraiser Booth", serviceHrs: 0, points: 2, date: "2026-11-14" },
+                    { id: 106, type: "workshop", title: "Peer Tutoring Kickoff", serviceHrs: 0, points: 2, date: "2026-11-18" },
+                    { id: 107, type: "workshop", title: "Holiday Toy Drive Prep", serviceHrs: 0, points: 2, date: "2026-11-19" },
+                    { id: 108, type: "workshop", title: "Board Game Workshop", serviceHrs: 0, points: 2, date: "2026-11-19" },
+                    { id: 109, type: "workshop", title: "Environmental Seminar", serviceHrs: 0, points: 2, date: "2026-11-19" },
+                    { id: 110, type: "social", title: "Club Meetings (x3)", serviceHrs: 0, points: 3, date: "2026-11-19" }
+                ]
+            },
+            {
+                id: "108492",
+                name: "Aisha Patel",
+                grade: "Sophomore",
+                logs: [
+                    { id: 201, type: "volunteering", title: "Animal Shelter Helper", serviceHrs: 16, points: 0, date: "2026-10-08" },
+                    { id: 202, type: "workshop", title: "First Aid Workshop", serviceHrs: 0, points: 2, date: "2026-10-25" },
+                    { id: 203, type: "workshop", title: "Fall Festival Booth", serviceHrs: 0, points: 2, date: "2026-11-04" },
+                    { id: 204, type: "social", title: "Monthly Club Meetings (x12)", serviceHrs: 0, points: 12, date: "2026-11-15" }
+                ]
+            },
+            {
+                id: "112045",
+                name: "Liam O'Connor",
+                grade: "Senior",
+                logs: [
+                    { id: 301, type: "volunteering", title: "Beach Cleanup", serviceHrs: 11, points: 0, date: "2026-10-11" },
+                    { id: 302, type: "workshop", title: "Career Panel", serviceHrs: 0, points: 2, date: "2026-11-05" },
+                    { id: 303, type: "social", title: "November Meeting", serviceHrs: 0, points: 1, date: "2026-11-12" }
+                ]
+            }
+        ];
+
+        let members = [];
+        let activeDetailMemberId = null;
+
+        function updateSyncBadge(status, text) {
+            const dot = document.getElementById("syncDot");
+            const label = document.getElementById("syncText");
+            if (!dot || !label) return;
+            label.textContent = text;
+            if (status === "saved") {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+            } else if (status === "saving") {
+                dot.className = "w-2 h-2 rounded-full bg-brand-500 animate-pulse";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-slate-400";
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    members = JSON.parse(stored);
+                    members.sort((a, b) => a.name.localeCompare(b.name));
+                } else {
+                    // Seed with starter examples on first load
+                    members = defaultStarterMembers;
+                    saveToLocalStorage();
+                }
+                updateSyncBadge("saved", "Saved Locally");
+                renderRoster();
+            } catch (error) {
+                console.error("Failed to load from localStorage:", error);
+                members = [];
+                updateSyncBadge("error", "Load Error");
+            }
+        }
+
+        function saveToLocalStorage() {
+            try {
+                updateSyncBadge("saving", "Saving...");
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+                updateSyncBadge("saved", "Saved Locally");
+            } catch (error) {
+                console.error("Failed to save to localStorage:", error);
+                updateSyncBadge("error", "Save Error");
+                showToast("Failed to save changes.", true);
+            }
+        }
+
+        function saveMember(member) {
+            const index = members.findIndex(m => m.id === member.id);
+            if (index >= 0) {
+                members[index] = member;
+            } else {
+                members.push(member);
+            }
+            members.sort((a, b) => a.name.localeCompare(b.name));
+            saveToLocalStorage();
+            renderRoster();
+        }
+
+        function removeMember(memberId) {
+            members = members.filter(m => m.id !== memberId);
+            saveToLocalStorage();
+            renderRoster();
+        }
+
+        // ==========================================
+        // CORE CLUB CALCULATION LOGIC
+        // ==========================================
+        function calculateMemberStats(member) {
+            let serviceHours = 0;
+            let rawPoints = 0;
+
+            member.logs.forEach(log => {
+                serviceHours += Number(log.serviceHrs || 0);
+                rawPoints += Number(log.points || 0);
+            });
+
+            // Rule: Every 4 points = 1 club hour. Max 20 points per semester = max 5 club hours.
+            const usablePoints = Math.min(rawPoints, 20);
+            const convertedClubHours = Math.floor(usablePoints / 4);
+            const totalHours = serviceHours + convertedClubHours;
+
+            // Evaluate Achievement Tiers (Highest to Lowest)
+            // - Recognition Pin: 30+ total hours (at least 25 service hours)
+            // - Senior Graduation Cord: 25 total hours (at least 20 service hours) [Seniors]
+            // - Active Membership Certificate: 20 total hours (at least 15 service hours)
+            let tier = {
+                code: "IN_PROGRESS",
+                label: "In Progress",
+                badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
+                icon: "fa-spinner",
+                nextGoal: ""
+            };
+
+            if (totalHours >= 30 && serviceHours >= 25) {
+                tier = {
+                    code: "PIN",
+                    label: "Recognition Pin",
+                    badgeClass: "bg-purple-100 text-purple-800 border-purple-200",
+                    icon: "fa-medal",
+                    nextGoal: "Highest club tier achieved!"
+                };
+            } else if (member.grade === "Senior" && totalHours >= 25 && serviceHours >= 20) {
+                tier = {
+                    code: "CORD",
+                    label: "Senior Graduation Cord",
+                    badgeClass: "bg-amber-100 text-amber-800 border-amber-200",
+                    icon: "fa-graduation-cap",
+                    nextGoal: `Need ${Math.max(0, 30 - totalHours)} total hrs & ${Math.max(0, 25 - serviceHours)} service hrs for Recognition Pin`
+                };
+            } else if (totalHours >= 20 && serviceHours >= 15) {
+                tier = {
+                    code: "CERT",
+                    label: "Active Membership Cert",
+                    badgeClass: "bg-blue-100 text-blue-800 border-blue-200",
+                    icon: "fa-certificate",
+                    nextGoal: member.grade === "Senior"
+                        ? `Need ${Math.max(0, 25 - totalHours)} total hrs & ${Math.max(0, 20 - serviceHours)} service hrs for Senior Cord`
+                        : `Need ${Math.max(0, 30 - totalHours)} total hrs & ${Math.max(0, 25 - serviceHours)} service hrs for Recognition Pin`
+                };
+            } else {
+                const hrsNeeded = Math.max(0, 20 - totalHours);
+                const srvNeeded = Math.max(0, 15 - serviceHours);
+                tier.nextGoal = `Need ${hrsNeeded} more total hrs (${srvNeeded} service hrs) for Active Certificate`;
+            }
+
+            return {
+                serviceHours,
+                rawPoints,
+                usablePoints,
+                convertedClubHours,
+                totalHours,
+                tier
+            };
+        }
+
+        // ==========================================
+        // UI RENDERING
+        // ==========================================
+        function renderRoster() {
+            const tbody = document.getElementById("rosterTableBody");
+            const emptyState = document.getElementById("emptyState");
+            const search = document.getElementById("searchInput").value.toLowerCase().trim();
+            const gradeFilter = document.getElementById("gradeFilter").value;
+            const tierFilter = document.getElementById("tierFilter").value;
+
+            let totalServiceAll = 0;
+            let totalPointsAll = 0;
+            let tierAchieversCount = 0;
+
+            // Calculate global stats across all members
+            members.forEach(m => {
+                const stats = calculateMemberStats(m);
+                totalServiceAll += stats.serviceHours;
+                totalPointsAll += stats.rawPoints;
+                if (stats.tier.code !== "IN_PROGRESS") tierAchieversCount++;
+            });
+
+            document.getElementById("statTotalMembers").textContent = members.length;
+            document.getElementById("statServiceHours").textContent = totalServiceAll;
+            document.getElementById("statTotalPoints").textContent = totalPointsAll;
+            document.getElementById("statTierAchievers").textContent = tierAchieversCount;
+
+            // Filter members for table display
+            const filtered = members.filter(m => {
+                const stats = calculateMemberStats(m);
+                const matchesSearch = m.name.toLowerCase().includes(search) || m.id.toLowerCase().includes(search);
+                const matchesGrade = gradeFilter === "ALL" || m.grade === gradeFilter;
+                const matchesTier = tierFilter === "ALL" || stats.tier.code === tierFilter;
+                return matchesSearch && matchesGrade && matchesTier;
+            });
+
+            tbody.innerHTML = "";
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove("hidden");
+                return;
+            } else {
+                emptyState.classList.add("hidden");
+            }
+
+            filtered.forEach(member => {
+                const stats = calculateMemberStats(member);
+                const progressPct = Math.min(100, Math.round((stats.totalHours / 30) * 100));
+                const isCapped = stats.rawPoints >= 20;
+
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50/90 transition group";
+                tr.innerHTML = `
+                    <td class="py-4 px-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                ${member.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                                <button onclick="openMemberDetail('${member.id}')" class="font-semibold text-slate-900 hover:text-brand-600 text-left transition">
+                                    ${member.name}
+                                </button>
+                                <div class="flex items-center gap-2 text-xs text-slate-500">
+                                    <span>ID: ${member.id}</span>
+                                    <span>•</span>
+                                    <span class="${member.grade === 'Senior' ? 'text-amber-600 font-medium' : ''}">${member.grade}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="py-4 px-4">
+                        <span class="font-bold text-emerald-700 text-base">${stats.serviceHours}</span>
+                        <span class="text-xs text-slate-400">hrs</span>
+                    </td>
+
+                    <td class="py-4 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-purple-700 text-base">${stats.rawPoints}</span>
+                            <span class="text-xs text-slate-400">pts</span>
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-md ${isCapped ? 'bg-amber-100 text-amber-800' : 'bg-purple-50 text-purple-700'}" title="4 points = 1 club hour (Max 5 club hours)">
+                                +${stats.convertedClubHours} club hr${stats.convertedClubHours === 1 ? '' : 's'}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td class="py-4 px-4">
+                        <div class="w-28">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <span class="font-extrabold text-slate-900 text-base">${stats.totalHours}</span>
+                                <span class="text-[11px] text-slate-400">/ 30 hrs</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-brand-600 h-1.5 rounded-full transition-all duration-300" style="width: ${progressPct}%"></div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="py-4 px-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${stats.tier.badgeClass}">
+                            <i class="fa-solid ${stats.tier.icon}"></i>
+                            ${stats.tier.label}
+                        </span>
+                    </td>
+
+                    <td class="py-4 px-5 text-right">
+                        <div class="inline-flex items-center gap-1.5">
+                            <button onclick="instantPointBump('${member.id}', 'social')" title="Quick +1 Pt (Meeting/Social)" 
+                                class="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition">
+                                +1 Pt
+                            </button>
+                            <button onclick="instantPointBump('${member.id}', 'workshop')" title="Quick +2 Pts (Workshop/Event)" 
+                                class="px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold transition">
+                                +2 Pts
+                            </button>
+                            <button onclick="openMemberDetail('${member.id}')" title="View Logs & Details" 
+                                class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // QUICK ACTIONS & LOGGING
+        // ==========================================
+        function instantPointBump(memberId, type) {
+            const member = members.find(m => m.id === memberId);
+            if (!member) return;
+
+            const isWorkshop = type === "workshop";
+            const pts = isWorkshop ? 2 : 1;
+            const title = isWorkshop ? "Workshop / Event Attendance" : "Meeting / Social Attendance";
+            const today = new Date().toISOString().split("T")[0];
+
+            const updatedLogs = [
+                {
+                    id: Date.now() + Math.random(),
+                    type: type,
+                    title: title,
+                    serviceHrs: 0,
+                    points: pts,
+                    date: today
+                },
+                ...(member.logs || [])
+            ];
+
+            saveMember({ ...member, logs: updatedLogs });
+            showToast(`Added +${pts} pt${pts > 1 ? 's' : ''} to ${member.name}`);
+        }
+
+        function openQuickLogModal() {
+            const checklist = document.getElementById("logMemberChecklist");
+            checklist.innerHTML = "";
+
+            members.forEach(m => {
+                const label = document.createElement("label");
+                label.className = "flex items-center justify-between px-3 py-2 hover:bg-white rounded-lg cursor-pointer transition";
+                label.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <input type="checkbox" name="selectedMembers" value="${m.id}" class="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                        <span class="text-sm font-medium text-slate-800">${m.name}</span>
+                    </div>
+                    <span class="text-xs text-slate-400">${m.grade}</span>
+                `;
+                checklist.appendChild(label);
+            });
+
+            document.getElementById("logTitle").value = "";
+            document.getElementById("logAmount").value = "1";
+            updateLogFormUI();
+            document.getElementById("quickLogModal").classList.remove("hidden");
+        }
+
+        function updateLogFormUI() {
+            const type = document.querySelector('input[name="activityType"]:checked').value;
+            const hoursWrapper = document.getElementById("hoursInputWrapper");
+            if (type === "volunteering") {
+                hoursWrapper.classList.remove("opacity-40", "pointer-events-none");
+            } else {
+                hoursWrapper.classList.add("opacity-40", "pointer-events-none");
+            }
+        }
+
+        function toggleAllLogMembers(checked) {
+            document.querySelectorAll('input[name="selectedMembers"]').forEach(cb => cb.checked = checked);
+        }
+
+        function handleQuickLog(e) {
+            e.preventDefault();
+            const type = document.querySelector('input[name="activityType"]:checked').value;
+            const title = document.getElementById("logTitle").value.trim();
+            const hours = parseFloat(document.getElementById("logAmount").value) || 0;
+            const selectedIds = Array.from(document.querySelectorAll('input[name="selectedMembers"]:checked')).map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                showToast("Please select at least one member.", true);
+                return;
+            }
+
+            const today = new Date().toISOString().split("T")[0];
+            let serviceHrs = 0;
+            let points = 0;
+
+            if (type === "volunteering") {
+                serviceHrs = hours;
+            } else if (type === "workshop") {
+                points = 2;
+            } else if (type === "social") {
+                points = 1;
+            }
+
+            closeModal("quickLogModal");
+
+            selectedIds.forEach(id => {
+                const member = members.find(m => m.id === id);
+                if (!member) return;
+                const updatedLogs = [
+                    {
+                        id: Date.now() + Math.random(),
+                        type,
+                        title,
+                        serviceHrs,
+                        points,
+                        date: today
+                    },
+                    ...(member.logs || [])
+                ];
+                saveMember({ ...member, logs: updatedLogs });
+            });
+
+            showToast(`Logged "${title}" for ${selectedIds.length} member${selectedIds.length > 1 ? 's' : ''}!`);
+        }
+
+        // ==========================================
+        // MEMBER DETAIL & HISTORY MODAL
+        // ==========================================
+        function openMemberDetail(memberId) {
+            const member = members.find(m => m.id === memberId);
+            if (!member) return;
+            activeDetailMemberId = memberId;
+
+            const stats = calculateMemberStats(member);
+
+            document.getElementById("detailName").textContent = member.name;
+            document.getElementById("detailMeta").textContent = `${member.grade} • Student ID: ${member.id}`;
+            document.getElementById("detailServiceHrs").textContent = stats.serviceHours;
+            document.getElementById("detailRawPoints").textContent = stats.rawPoints;
+            document.getElementById("detailConvertedHrs").innerHTML = `${stats.convertedClubHours} <span class="text-xs font-normal text-blue-600">/ 5 max</span>`;
+            document.getElementById("detailTotalHrs").textContent = stats.totalHours;
+
+            // Tier Status Callout
+            const tierBox = document.getElementById("detailTierBox");
+            tierBox.className = `p-4 rounded-xl border ${stats.tier.badgeClass}`;
+            tierBox.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 font-bold text-sm">
+                        <i class="fa-solid ${stats.tier.icon}"></i>
+                        <span>Current Status: ${stats.tier.label}</span>
+                    </div>
+                    ${stats.rawPoints > 20 ? '<span class="text-[11px] font-semibold bg-white/80 px-2 py-0.5 rounded">20-pt conversion cap reached</span>' : ''}
+                </div>
+                <p class="text-xs mt-1 opacity-90">${stats.tier.nextGoal}</p>
+            `;
+
+            // Render Logs
+            const historyList = document.getElementById("detailHistoryList");
+            historyList.innerHTML = "";
+
+            if (member.logs.length === 0) {
+                historyList.innerHTML = `<p class="text-sm text-slate-400 italic py-4 text-center">No activity logs recorded yet.</p>`;
+            } else {
+                member.logs.forEach(log => {
+                    const isVol = log.type === "volunteering";
+                    const badge = isVol
+                        ? `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-xs">+${log.serviceHrs} Service Hr${log.serviceHrs === 1 ? '' : 's'}</span>`
+                        : `<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-xs">+${log.points} Pt${log.points === 1 ? '' : 's'}</span>`;
+
+                    const item = document.createElement("div");
+                    item.className = "flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100";
+                    item.innerHTML = `
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">${log.title}</p>
+                            <p class="text-xs text-slate-400">${log.date} • ${log.type.charAt(0).toUpperCase() + log.type.slice(1)}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            ${badge}
+                            <button onclick="deleteLogEntry('${member.id}', ${log.id})" class="text-slate-400 hover:text-red-600 transition p-1" title="Delete Entry">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    historyList.appendChild(item);
+                });
+            }
+
+            // Setup Delete Member button
+            const delBtn = document.getElementById("deleteMemberBtn");
+            delBtn.onclick = () => {
+                if (!confirm(`Are you sure you want to remove ${member.name} from the roster?`)) return;
+                closeModal("memberDetailModal");
+                activeDetailMemberId = null;
+                removeMember(member.id);
+                showToast(`Removed ${member.name} from roster`);
+            };
+
+            document.getElementById("memberDetailModal").classList.remove("hidden");
+        }
+
+        function deleteLogEntry(memberId, logId) {
+            const member = members.find(m => m.id === memberId);
+            if (!member) return;
+            const updatedLogs = (member.logs || []).filter(l => l.id !== logId);
+            saveMember({ ...member, logs: updatedLogs });
+            showToast("Log entry deleted");
+            // Refresh the detail view
+            openMemberDetail(memberId);
+        }
+
+        // ==========================================
+        // BACKUP & RESTORE FUNCTIONS
+        // ==========================================
+        function exportBackup() {
+            const backup = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                members: members
+            };
+
+            const dataStr = JSON.stringify(backup, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Club_Tracker_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast(`Backup exported! (${members.length} members)`);
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+
+                    // Validate backup structure
+                    if (!backup.members || !Array.isArray(backup.members)) {
+                        showToast("Invalid backup file format.", true);
+                        return;
+                    }
+
+                    // Confirm before overwriting
+                    const confirmMsg = `This will replace your current data with ${backup.members.length} members from the backup.\n\nCurrent data: ${members.length} members\nBackup date: ${backup.exportDate ? new Date(backup.exportDate).toLocaleDateString() : 'Unknown'}\n\nContinue?`;
+
+                    if (!confirm(confirmMsg)) {
+                        event.target.value = ''; // Reset file input
+                        return;
+                    }
+
+                    // Import the data
+                    members = backup.members;
+                    members.sort((a, b) => a.name.localeCompare(b.name));
+                    saveToLocalStorage();
+                    renderRoster();
+
+                    showToast(`Backup restored successfully! (${members.length} members)`);
+                } catch (error) {
+                    console.error("Import failed:", error);
+                    showToast("Failed to import backup. File may be corrupted.", true);
+                }
+
+                // Reset file input so same file can be selected again
+                event.target.value = '';
+            };
+
+            reader.onerror = function () {
+                showToast("Failed to read backup file.", true);
+                event.target.value = '';
+            };
+
+            reader.readAsText(file);
+        }
+
+        function toggleExportMenu() {
+            const menu = document.getElementById('exportMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Close export menu when clicking outside
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('exportMenu');
+            const btn = document.getElementById('exportMenuBtn');
+            if (!menu.contains(event.target) && !btn.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // ==========================================
+        // ADD MEMBER & CSV EXPORT
+        // ==========================================
+        function openAddMemberModal() {
+            document.getElementById("newMemberName").value = "";
+            document.getElementById("newMemberId").value = "";
+            document.getElementById("addMemberModal").classList.remove("hidden");
+        }
+
+        function handleAddMember(e) {
+            e.preventDefault();
+            const name = document.getElementById("newMemberName").value.trim();
+            const id = document.getElementById("newMemberId").value.trim();
+            const grade = document.getElementById("newMemberGrade").value;
+
+            if (members.some(m => m.id === id)) {
+                showToast("A member with that Student ID already exists.", true);
+                return;
+            }
+
+            closeModal("addMemberModal");
+            saveMember({ id, name, grade, logs: [] });
+            showToast(`Added ${name} to the club roster!`);
+        }
+
+        function exportCSV() {
+            const headers = ["Student ID", "Name", "Grade", "Service Hours", "Raw Points", "Converted Club Hours", "Total Club Hours", "Achievement Tier"];
+            const rows = members.map(m => {
+                const s = calculateMemberStats(m);
+                return [
+                    `"${m.id}"`,
+                    `"${m.name}"`,
+                    `"${m.grade}"`,
+                    s.serviceHours,
+                    s.rawPoints,
+                    s.convertedClubHours,
+                    s.totalHours,
+                    `"${s.tier.label}"`
+                ].join(",");
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Club_Tracker_Report_${new Date().toISOString().split("T")[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV report exported!");
+        }
+
+        // ==========================================
+        // MODAL & TOAST UTILITIES
+        // ==========================================
+        function openGuideModal() {
+            document.getElementById("guideModal").classList.remove("hidden");
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add("hidden");
+        }
+
+        let toastTimeout;
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toastMsg");
+            const toastIcon = document.getElementById("toastIcon");
+
+            toastMsg.textContent = msg;
+            toastIcon.className = isError
+                ? "fa-solid fa-circle-exclamation text-amber-400"
+                : "fa-solid fa-circle-check text-emerald-400";
+
+            toast.classList.remove("translate-y-20", "opacity-0");
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+
+        // Close modals on backdrop click
+        window.addEventListener("click", (e) => {
+            ["quickLogModal", "memberDetailModal", "addMemberModal", "guideModal"].forEach(id => {
+                const modal = document.getElementById(id);
+                if (e.target === modal) closeModal(id);
+            });
+        });
+
+        // Expose functions to global window scope for inline HTML event handlers
+        window.openGuideModal = openGuideModal;
+        window.closeModal = closeModal;
+        window.openQuickLogModal = openQuickLogModal;
+        window.updateLogFormUI = updateLogFormUI;
+        window.toggleAllLogMembers = toggleAllLogMembers;
+        window.handleQuickLog = handleQuickLog;
+        window.openMemberDetail = openMemberDetail;
+        window.deleteLogEntry = deleteLogEntry;
+        window.openAddMemberModal = openAddMemberModal;
+        window.handleAddMember = handleAddMember;
+        window.exportCSV = exportCSV;
+        window.exportBackup = exportBackup;
+        window.importBackup = importBackup;
+        window.toggleExportMenu = toggleExportMenu;
+        window.instantPointBump = instantPointBump;
+        window.renderRoster = renderRoster;
+
+        // Initialize on page load
+        loadFromLocalStorage();
+    </script>
+</body>
+
+</html>
